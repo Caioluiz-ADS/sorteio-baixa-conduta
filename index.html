@@ -1,0 +1,454 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteio De Baixa Conduta PRO CLUBS</title>
+<style>
+  :root{
+    --bg:#050b17;
+    --bg2:#0a1628;
+    --panel:#0e1d33;
+    --panel2:#12243f;
+    --line:#1c3455;
+    --accent:#00e6a8;
+    --accent2:#1e90ff;
+    --gold:#ffd34d;
+    --danger:#ff5470;
+    --txt:#eaf2ff;
+    --muted:#8aa2c4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(30,144,255,.18), transparent 60%),
+      radial-gradient(1000px 500px at -10% 10%, rgba(0,230,168,.14), transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    color:var(--txt);
+    min-height:100vh;
+  }
+  .pitch-lines{position:fixed;inset:0;pointer-events:none;opacity:.06;
+    background-image:linear-gradient(90deg,#fff 1px,transparent 1px);
+    background-size:80px 100%;}
+  header{
+    position:relative;
+    padding:26px 20px 20px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(0,230,168,.08),transparent);
+  }
+  header .badge{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:6px 14px;border-radius:100px;
+    background:rgba(0,230,168,.1);border:1px solid var(--accent);
+    color:var(--accent);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  }
+  header h1{
+    margin-top:12px;
+    font-size:clamp(24px,5vw,42px);
+    font-weight:900;letter-spacing:1px;
+    text-transform:uppercase;
+    background:linear-gradient(90deg,#fff,var(--accent) 40%,var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 40px rgba(0,230,168,.25);
+  }
+  header p{color:var(--muted);margin-top:6px;font-size:14px}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;justify-content:center}
+  .tab{
+    padding:12px 22px;border-radius:12px;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);
+    color:var(--muted);font-weight:700;font-size:14px;transition:.15s;
+  }
+  .tab:hover{color:var(--txt);border-color:var(--accent2)}
+  .tab.active{
+    background:linear-gradient(180deg,var(--accent),#00b98a);
+    color:#022; border-color:transparent;
+    box-shadow:0 8px 24px rgba(0,230,168,.3);
+  }
+
+  .view{display:none;animation:fade .25s}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;
+  }
+  .card h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  input[type=text],input[type=number]{
+    width:100%;padding:12px 14px;border-radius:10px;
+    background:var(--bg);border:1px solid var(--line);color:var(--txt);font-size:15px;
+  }
+  input:focus{outline:none;border-color:var(--accent)}
+
+  .grid{display:grid;gap:14px}
+  .grid.g3{grid-template-columns:2fr 1fr 1fr}
+  @media(max-width:640px){.grid.g3{grid-template-columns:1fr}}
+
+  .star-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .stars{display:inline-flex;font-size:30px;line-height:1;cursor:pointer;user-select:none}
+  .star{position:relative;width:30px;color:#3d5580}
+  .star .fill{position:absolute;left:0;top:0;overflow:hidden;color:var(--gold);white-space:nowrap}
+  .star .half-left,.star .half-right{position:absolute;top:0;height:100%;width:50%}
+  .star .half-left{left:0}.star .half-right{right:0}
+  .star-val{font-weight:900;color:var(--gold);font-size:18px;min-width:60px}
+
+  .btn{
+    padding:12px 20px;border:none;border-radius:11px;cursor:pointer;
+    font-weight:800;font-size:14px;transition:.15s;
+  }
+  .btn-primary{background:linear-gradient(180deg,var(--accent),#00b98a);color:#022}
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn-blue{background:linear-gradient(180deg,var(--accent2),#1571d1);color:#fff}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .btn-ghost:hover{color:var(--txt);border-color:var(--danger)}
+  .btn-lg{padding:16px 30px;font-size:16px}
+
+  .player-list{display:grid;gap:10px}
+  .player-row{
+    display:flex;align-items:center;gap:14px;
+    background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  }
+  .player-row .name{font-weight:800;font-size:16px;flex:1}
+  .avatar{
+    width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;
+    border:2px solid var(--accent);background:var(--bg);
+  }
+  .avatar.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);border-color:var(--line)}
+  .avatar-sm{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;border:2px solid var(--line);background:var(--bg)}
+  .avatar-sm.ph{display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted)}
+  .photo-pick{display:flex;align-items:center;gap:14px}
+  .photo-preview{
+    width:64px;height:64px;border-radius:50%;object-fit:cover;
+    border:2px dashed var(--line);background:var(--bg);
+    display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer;
+  }
+  .photo-preview img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .team-player .nm{font-weight:700;display:flex;align-items:center;gap:10px}
+  .player-row .mini-stars{color:var(--gold);font-size:15px;letter-spacing:1px}
+  .player-row .stat{font-size:12px;color:var(--muted);background:var(--panel);padding:4px 9px;border-radius:8px;font-weight:700}
+  .player-row .stat b{color:var(--txt)}
+  .del{background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:20px;font-weight:900;padding:4px 8px}
+
+  .row-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-top:16px}
+  .row-controls .field{flex:1;min-width:140px}
+
+  .empty{text-align:center;color:var(--muted);padding:30px;font-style:italic}
+
+  .teams{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){.teams{grid-template-columns:1fr}}
+  .team{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:16px;padding:18px;
+  }
+  .team.A{border-top:3px solid var(--accent)}
+  .team.B{border-top:3px solid var(--accent2)}
+  .team h3{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:17px}
+  .team .power{font-size:13px;font-weight:800;padding:4px 12px;border-radius:100px}
+  .team.A .power{background:rgba(0,230,168,.15);color:var(--accent)}
+  .team.B .power{background:rgba(30,144,255,.15);color:var(--accent2)}
+  .team-player{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .team-player:last-child{border:none}
+  .team-player .st{color:var(--gold);font-size:13px}
+
+  .balance-bar{height:10px;border-radius:100px;background:var(--bg);overflow:hidden;display:flex;margin:10px 0 4px}
+  .balance-bar .a{background:var(--accent)}
+  .balance-bar .b{background:var(--accent2)}
+  .balance-note{text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--accent);color:#022;padding:12px 22px;border-radius:12px;font-weight:800;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);transition:.3s;opacity:0;z-index:99;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .count-pill{font-size:12px;color:var(--muted);font-weight:700}
+</style>
+
+<div class="pitch-lines"></div>
+
+<header>
+  <span class="badge">⚽ FIFA PRO CLUBS</span>
+  <h1>Sorteio De Baixa Conduta</h1>
+  <p>A MACACADA VAI COMEÇAR</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-view="add">➕ Adicionar Jogador</div>
+    <div class="tab" data-view="elenco">👥 Elenco</div>
+    <div class="tab" data-view="sorteio">🎲 Sortear Times</div>
+  </div>
+
+  <!-- ADD -->
+  <div class="view active" id="view-add">
+    <div class="card">
+      <h2><span class="dot"></span>Cadastrar jogador</h2>
+      <div style="margin-bottom:16px">
+        <label>Foto do jogador (opcional)</label>
+        <div class="photo-pick">
+          <div class="photo-preview" id="photoPreview" title="Clique para escolher uma foto">📷</div>
+          <div>
+            <button class="btn btn-ghost" id="photoBtn" type="button">Escolher foto</button>
+            <button class="btn btn-ghost" id="photoClear" type="button" style="display:none">Remover</button>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="grid g3">
+        <div>
+          <label>Nome do jogador</label>
+          <input type="text" id="pName" placeholder="Ex: CR7, Neymar, Zé..." maxlength="24">
+        </div>
+        <div>
+          <label>Gols</label>
+          <input type="number" id="pGoals" value="0" min="0">
+        </div>
+        <div>
+          <label>Assistências</label>
+          <input type="number" id="pAssists" value="0" min="0">
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <label>Nível (estrelas) — clique na metade esquerda p/ meia estrela</label>
+        <div class="star-pick">
+          <div class="stars" id="starInput"></div>
+          <span class="star-val" id="starVal">0 ★</span>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <button class="btn btn-primary btn-lg" id="addBtn">Adicionar ao elenco</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ELENCO -->
+  <div class="view" id="view-elenco">
+    <div class="card">
+      <h2><span class="dot"></span>Elenco <span class="count-pill" id="countPill"></span></h2>
+      <div class="player-list" id="playerList"></div>
+      <div class="toolbar" style="margin-top:18px;justify-content:flex-start">
+        <button class="btn btn-ghost" id="clearBtn">🗑️ Limpar tudo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SORTEIO -->
+  <div class="view" id="view-sorteio">
+    <div class="card">
+      <h2><span class="dot"></span>Sortear times equilibrados</h2>
+      <div class="row-controls">
+        <div class="field">
+          <label>Número de times</label>
+          <input type="number" id="numTeams" value="2" min="2" max="6">
+        </div>
+        <button class="btn btn-blue btn-lg" id="drawBtn">🎲 Sortear agora</button>
+      </div>
+    </div>
+    <div id="resultArea"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY = 'sbc_players_v1';
+let players = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+let currentStars = 0;
+let currentPhoto = '';
+
+/* ---------- estrelas input (0 a 5, passo 0.5) ---------- */
+const starInput = document.getElementById('starInput');
+const starVal = document.getElementById('starVal');
+function renderStarInput(){
+  starInput.innerHTML='';
+  for(let i=1;i<=5;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    let fillPct = 0;
+    if(currentStars>=i) fillPct=100;
+    else if(currentStars>=i-0.5) fillPct=50;
+    s.innerHTML='★<span class="fill" style="width:'+fillPct+'%">★</span>'+
+      '<span class="half-left"></span><span class="half-right"></span>';
+    s.querySelector('.half-left').onclick=()=>{currentStars=i-0.5;renderStarInput();};
+    s.querySelector('.half-right').onclick=()=>{currentStars=i;renderStarInput();};
+    starInput.appendChild(s);
+  }
+  starVal.textContent = currentStars.toFixed(1).replace('.0','')+' ★';
+}
+renderStarInput();
+
+/* ---------- mini estrelas p/ exibir ---------- */
+function starsHTML(v){
+  let out='';
+  for(let i=1;i<=5;i++){
+    if(v>=i) out+='★';
+    else if(v>=i-0.5) out+='⯪';
+    else out+='☆';
+  }
+  return out;
+}
+
+/* ---------- foto ---------- */
+const photoInput=document.getElementById('photoInput');
+const photoPreview=document.getElementById('photoPreview');
+const photoClear=document.getElementById('photoClear');
+document.getElementById('photoBtn').onclick=()=>photoInput.click();
+photoPreview.onclick=()=>photoInput.click();
+photoInput.onchange=()=>{
+  const f=photoInput.files[0];
+  if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    // redimensiona p/ não estourar o localStorage
+    const img=new Image();
+    img.onload=()=>{
+      const size=200;
+      const c=document.createElement('canvas');c.width=size;c.height=size;
+      const ctx=c.getContext('2d');
+      const s=Math.min(img.width,img.height);
+      ctx.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,size,size);
+      currentPhoto=c.toDataURL('image/jpeg',0.8);
+      photoPreview.innerHTML='<img src="'+currentPhoto+'">';
+      photoClear.style.display='';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+};
+photoClear.onclick=()=>{currentPhoto='';photoInput.value='';photoPreview.innerHTML='📷';photoClear.style.display='none';};
+function avatarHTML(p,cls){
+  if(p.photo) return '<img class="'+cls+'" src="'+p.photo+'" alt="">';
+  return '<span class="'+cls+' ph">👤</span>';
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------- persistência ---------- */
+function save(){localStorage.setItem(LS_KEY,JSON.stringify(players));}
+
+/* ---------- adicionar ---------- */
+document.getElementById('addBtn').onclick=()=>{
+  const name=document.getElementById('pName').value.trim();
+  const goals=parseInt(document.getElementById('pGoals').value)||0;
+  const assists=parseInt(document.getElementById('pAssists').value)||0;
+  if(!name){toast('Digite o nome!');return;}
+  if(currentStars<=0){toast('Escolha as estrelas!');return;}
+  players.push({name,stars:currentStars,goals,assists,photo:currentPhoto});
+  save();
+  document.getElementById('pName').value='';
+  document.getElementById('pGoals').value='0';
+  document.getElementById('pAssists').value='0';
+  currentStars=0;renderStarInput();
+  currentPhoto='';photoInput.value='';photoPreview.innerHTML='📷';photoClear.style.display='none';
+  renderList();
+  toast('⚽ '+name+' adicionado!');
+};
+
+/* ---------- lista elenco ---------- */
+function renderList(){
+  const list=document.getElementById('playerList');
+  document.getElementById('countPill').textContent = players.length+' jogador(es)';
+  if(players.length===0){list.innerHTML='<div class="empty">Nenhum jogador ainda. Vá em "Adicionar Jogador".</div>';return;}
+  list.innerHTML='';
+  players.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='player-row';
+    row.innerHTML=
+      avatarHTML(p,'avatar')+
+      '<span class="name">'+escapeHtml(p.name)+'</span>'+
+      '<span class="mini-stars">'+starsHTML(p.stars)+' '+p.stars+'</span>'+
+      '<span class="stat">⚽ <b>'+p.goals+'</b></span>'+
+      '<span class="stat">🅰️ <b>'+p.assists+'</b></span>'+
+      '<button class="del" title="Remover">✕</button>';
+    row.querySelector('.del').onclick=()=>{players.splice(i,1);save();renderList();};
+    list.appendChild(row);
+  });
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+document.getElementById('clearBtn').onclick=()=>{
+  if(players.length && confirm('Apagar todo o elenco?')){players=[];save();renderList();document.getElementById('resultArea').innerHTML='';}
+};
+
+/* ---------- sorteio equilibrado ---------- */
+document.getElementById('drawBtn').onclick=()=>{
+  const n=Math.max(2,Math.min(6,parseInt(document.getElementById('numTeams').value)||2));
+  if(players.length<n){toast('Poucos jogadores p/ '+n+' times');return;}
+
+  // embaralha p/ variar sorteios, depois distribui por nível (greedy no time mais fraco)
+  const pool=[...players].sort(()=>Math.random()-0.5)
+                         .sort((a,b)=>b.stars-a.stars);
+  const teams=Array.from({length:n},()=>({players:[],power:0}));
+  pool.forEach(p=>{
+    teams.sort((a,b)=>a.power-b.power || a.players.length-b.players.length);
+    teams[0].players.push(p);
+    teams[0].power+=p.stars;
+  });
+  renderTeams(teams);
+  toast('🎲 Times sorteados!');
+};
+
+function renderTeams(teams){
+  const area=document.getElementById('resultArea');
+  const maxPower=Math.max(...teams.map(t=>t.power))||1;
+  let html='<div class="card"><h2><span class="dot"></span>Resultado do sorteio</h2>';
+
+  // barra de equilíbrio
+  const total=teams.reduce((s,t)=>s+t.power,0)||1;
+  html+='<div class="balance-bar">';
+  teams.forEach((t,i)=>{
+    const cls=i%2===0?'a':'b';
+    html+='<div class="'+cls+'" style="width:'+(t.power/total*100)+'%"></div>';
+  });
+  html+='</div>';
+  const spread=(maxPower-Math.min(...teams.map(t=>t.power))).toFixed(1);
+  html+='<div class="balance-note">Diferença entre o mais forte e o mais fraco: <b style="color:var(--gold)">'+spread+' ★</b> — quanto menor, mais equilibrado.</div>';
+
+  html+='<div class="teams">';
+  teams.forEach((t,i)=>{
+    const label=String.fromCharCode(65+i);
+    const cls=i%2===0?'A':'B';
+    const g=t.players.reduce((s,p)=>s+p.goals,0);
+    const a=t.players.reduce((s,p)=>s+p.assists,0);
+    html+='<div class="team '+cls+'"><h3>Time '+label+
+      '<span class="power">'+t.power.toFixed(1)+' ★</span></h3>';
+    t.players.forEach(p=>{
+      html+='<div class="team-player"><span class="nm">'+avatarHTML(p,'avatar-sm')+escapeHtml(p.name)+'</span>'+
+        '<span class="st">'+starsHTML(p.stars)+' '+p.stars+'</span></div>';
+    });
+    html+='<div class="balance-note" style="margin:10px 0 0;text-align:left">⚽ '+g+' gols • 🅰️ '+a+' assist.</div>';
+    html+='</div>';
+  });
+  html+='</div></div>';
+  area.innerHTML=html;
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.view).classList.add('active');
+    if(tab.dataset.view==='elenco') renderList();
+  };
+});
+
+renderList();
+</script>
