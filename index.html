@@ -236,7 +236,13 @@
       <h2><span class="dot"></span>Elenco <span class="count-pill" id="countPill"></span></h2>
       <div class="player-list" id="playerList"></div>
       <div class="toolbar" style="margin-top:18px;justify-content:flex-start">
+        <button class="btn btn-blue" id="exportBtn">💾 Salvar backup</button>
+        <button class="btn btn-ghost" id="importBtn">📂 Restaurar backup</button>
         <button class="btn btn-ghost" id="clearBtn">🗑️ Limpar tudo</button>
+        <input type="file" id="importInput" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="balance-note" style="text-align:left;margin-top:12px">
+        💡 Seus jogadores ficam salvos automaticamente neste navegador. Use <b>Salvar backup</b> para guardar um arquivo e não perder os dados nunca — ou levá-los para outro PC/navegador com <b>Restaurar backup</b>.
       </div>
     </div>
   </div>
@@ -381,6 +387,45 @@ function renderList(){
   });
 }
 function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- backup / restaurar ---------- */
+document.getElementById('exportBtn').onclick=()=>{
+  if(players.length===0){toast('Nenhum jogador para salvar');return;}
+  const data=JSON.stringify(players,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=new Date();
+  const stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  a.href=url;a.download='backup-sorteio-'+stamp+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+  toast('💾 Backup salvo!');
+};
+const importInput=document.getElementById('importInput');
+document.getElementById('importBtn').onclick=()=>importInput.click();
+importInput.onchange=()=>{
+  const f=importInput.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw 0;
+      const clean=data.filter(p=>p&&typeof p.name==='string').map(p=>({
+        name:String(p.name),
+        stars:Number(p.stars)||0,
+        goals:parseInt(p.goals)||0,
+        assists:parseInt(p.assists)||0,
+        photo:typeof p.photo==='string'?p.photo:''
+      }));
+      if(players.length && !confirm('Isso vai substituir os '+players.length+' jogador(es) atuais por '+clean.length+' do backup. Continuar?')){importInput.value='';return;}
+      players=clean;save();renderList();
+      toast('📂 Backup restaurado! '+clean.length+' jogador(es)');
+    }catch(err){toast('Arquivo de backup inválido');}
+    importInput.value='';
+  };
+  reader.readAsText(f);
+};
 
 document.getElementById('clearBtn').onclick=()=>{
   if(players.length && confirm('Apagar todo o elenco?')){players=[];save();renderList();document.getElementById('resultArea').innerHTML='';}
