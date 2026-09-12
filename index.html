@@ -133,6 +133,8 @@
   .player-row .stat{font-size:12px;color:var(--muted);background:var(--panel);padding:4px 9px;border-radius:8px;font-weight:700}
   .player-row .stat b{color:var(--txt)}
   .del{background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:20px;font-weight:900;padding:4px 8px}
+  .edit{background:transparent;border:none;cursor:pointer;font-size:17px;padding:4px 6px;filter:grayscale(.2);opacity:.85}
+  .edit:hover{opacity:1;transform:scale(1.15)}
 
   .row-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-top:16px}
   .row-controls .field{flex:1;min-width:140px}
@@ -224,8 +226,9 @@
         </div>
       </div>
 
-      <div style="margin-top:18px">
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-primary btn-lg" id="addBtn">Adicionar ao elenco</button>
+        <button class="btn btn-ghost btn-lg" id="cancelEditBtn" style="display:none">Cancelar edição</button>
       </div>
     </div>
   </div>
@@ -282,6 +285,7 @@ const LS_KEY = 'sbc_players_v1';
 let players = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
 let currentStars = 0;
 let currentPhoto = '';
+let editIndex = -1;
 
 /* ---------- Firebase / sincronização online ---------- */
 let db=null, rosterRef=null, cloudReady=false, applyingRemote=false;
@@ -401,22 +405,62 @@ function save(){
   if(!applyingRemote) pushCloud();
 }
 
-/* ---------- adicionar ---------- */
-document.getElementById('addBtn').onclick=()=>{
-  const name=document.getElementById('pName').value.trim();
-  const goals=parseInt(document.getElementById('pGoals').value)||0;
-  const assists=parseInt(document.getElementById('pAssists').value)||0;
-  if(!name){toast('Digite o nome!');return;}
-  if(currentStars<=0){toast('Escolha as estrelas!');return;}
-  players.push({name,stars:currentStars,goals,assists,photo:currentPhoto});
-  save();
+/* ---------- adicionar / editar ---------- */
+const addBtn=document.getElementById('addBtn');
+const cancelEditBtn=document.getElementById('cancelEditBtn');
+
+function resetForm(){
   document.getElementById('pName').value='';
   document.getElementById('pGoals').value='0';
   document.getElementById('pAssists').value='0';
   currentStars=0;renderStarInput();
   currentPhoto='';photoInput.value='';photoPreview.innerHTML='📷';photoClear.style.display='none';
-  renderList();
-  toast('⚽ '+name+' adicionado!');
+  editIndex=-1;
+  addBtn.textContent='Adicionar ao elenco';
+  cancelEditBtn.style.display='none';
+}
+
+function startEdit(i){
+  const p=players[i];
+  editIndex=i;
+  document.getElementById('pName').value=p.name;
+  document.getElementById('pGoals').value=p.goals;
+  document.getElementById('pAssists').value=p.assists;
+  currentStars=p.stars;renderStarInput();
+  currentPhoto=p.photo||'';
+  photoPreview.innerHTML = currentPhoto? '<img src="'+currentPhoto+'">':'📷';
+  photoClear.style.display = currentPhoto? '':'none';
+  addBtn.textContent='💾 Salvar alterações';
+  cancelEditBtn.style.display='';
+  // vai para a aba de cadastro
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector('.tab[data-view=add]').classList.add('active');
+  document.getElementById('view-add').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+cancelEditBtn.onclick=()=>{resetForm();toast('Edição cancelada');};
+
+addBtn.onclick=()=>{
+  const name=document.getElementById('pName').value.trim();
+  const goals=parseInt(document.getElementById('pGoals').value)||0;
+  const assists=parseInt(document.getElementById('pAssists').value)||0;
+  if(!name){toast('Digite o nome!');return;}
+  if(currentStars<=0){toast('Escolha as estrelas!');return;}
+  const data={name,stars:currentStars,goals,assists,photo:currentPhoto};
+  if(editIndex>=0){
+    players[editIndex]=data;
+    save();renderList();
+    resetForm();
+    toast('✏️ '+name+' atualizado!');
+    document.querySelector('.tab[data-view=elenco]').click();
+  }else{
+    players.push(data);
+    save();renderList();
+    resetForm();
+    toast('⚽ '+name+' adicionado!');
+  }
 };
 
 /* ---------- lista elenco ---------- */
@@ -434,8 +478,15 @@ function renderList(){
       '<span class="mini-stars">'+starsHTML(p.stars)+' '+p.stars+'</span>'+
       '<span class="stat">⚽ <b>'+p.goals+'</b></span>'+
       '<span class="stat">🅰️ <b>'+p.assists+'</b></span>'+
+      '<button class="edit" title="Editar">✏️</button>'+
       '<button class="del" title="Remover">✕</button>';
-    row.querySelector('.del').onclick=()=>{players.splice(i,1);save();renderList();};
+    row.querySelector('.edit').onclick=()=>startEdit(i);
+    row.querySelector('.del').onclick=()=>{
+      if(!confirm('Remover '+p.name+'?'))return;
+      players.splice(i,1);
+      if(editIndex===i) resetForm();
+      save();renderList();
+    };
     list.appendChild(row);
   });
 }
