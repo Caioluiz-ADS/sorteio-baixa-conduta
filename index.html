@@ -233,7 +233,7 @@
   <!-- ELENCO -->
   <div class="view" id="view-elenco">
     <div class="card">
-      <h2><span class="dot"></span>Elenco <span class="count-pill" id="countPill"></span></h2>
+      <h2><span class="dot"></span>Elenco <span class="count-pill" id="countPill"></span> <span class="count-pill" id="syncPill" style="margin-left:auto">☁️ conectando...</span></h2>
       <div class="player-list" id="playerList"></div>
       <div class="toolbar" style="margin-top:18px;justify-content:flex-start">
         <button class="btn btn-blue" id="exportBtn">💾 Salvar backup</button>
@@ -242,7 +242,7 @@
         <input type="file" id="importInput" accept="application/json,.json" style="display:none">
       </div>
       <div class="balance-note" style="text-align:left;margin-top:12px">
-        💡 Seus jogadores ficam salvos automaticamente neste navegador. Use <b>Salvar backup</b> para guardar um arquivo e não perder os dados nunca — ou levá-los para outro PC/navegador com <b>Restaurar backup</b>.
+        ☁️ A lista de jogadores é <b>compartilhada online</b>: todos que abrirem o link veem os mesmos jogadores, atualizando em tempo real. O <b>backup</b> serve como cópia de segurança.
       </div>
     </div>
   </div>
@@ -265,11 +265,61 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDCR0siNrQn4RzuGYaWzQv8BJ37b6tsiJQ",
+  authDomain: "sorteio-times-2bfc6.firebaseapp.com",
+  projectId: "sorteio-times-2bfc6",
+  storageBucket: "sorteio-times-2bfc6.firebasestorage.app",
+  messagingSenderId: "528996785079",
+  appId: "1:528996785079:web:018cde7cbb76cdf0b36632"
+};
+
 const LS_KEY = 'sbc_players_v1';
 let players = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
 let currentStars = 0;
 let currentPhoto = '';
+
+/* ---------- Firebase / sincronização online ---------- */
+let db=null, rosterRef=null, cloudReady=false, applyingRemote=false;
+const syncPill=document.getElementById('syncPill');
+function setSync(txt,color){syncPill.textContent=txt;if(color)syncPill.style.color=color;}
+try{
+  const fbApp=initializeApp(firebaseConfig);
+  db=getFirestore(fbApp);
+  rosterRef=doc(db,'app','roster');
+  onSnapshot(rosterRef, snap=>{
+    cloudReady=true;
+    if(snap.exists() && Array.isArray(snap.data().players)){
+      applyingRemote=true;
+      players=snap.data().players;
+      localStorage.setItem(LS_KEY,JSON.stringify(players));
+      applyingRemote=false;
+      renderList();
+      setSync('☁️ online','var(--accent)');
+    }else{
+      // documento ainda não existe: cria com o que houver localmente
+      setSync('☁️ online','var(--accent)');
+      if(players.length){pushCloud();}
+    }
+  }, err=>{
+    setSync('⚠️ offline (só neste aparelho)','var(--danger)');
+    console.warn('Firestore erro:',err);
+  });
+}catch(e){
+  setSync('⚠️ offline (só neste aparelho)','var(--danger)');
+  console.warn('Firebase falhou:',e);
+}
+function pushCloud(){
+  if(!rosterRef) return;
+  setDoc(rosterRef,{players, updatedAt:Date.now()}).catch(err=>{
+    console.warn('Falha ao salvar online:',err);
+    setSync('⚠️ erro ao salvar online','var(--danger)');
+  });
+}
 
 /* ---------- estrelas input (0 a 5, passo 0.5) ---------- */
 const starInput = document.getElementById('starInput');
@@ -346,7 +396,10 @@ function toast(msg){
 }
 
 /* ---------- persistência ---------- */
-function save(){localStorage.setItem(LS_KEY,JSON.stringify(players));}
+function save(){
+  localStorage.setItem(LS_KEY,JSON.stringify(players));
+  if(!applyingRemote) pushCloud();
+}
 
 /* ---------- adicionar ---------- */
 document.getElementById('addBtn').onclick=()=>{
